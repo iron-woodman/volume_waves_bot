@@ -1,0 +1,10 @@
+#* * * * * cd /usr/local/bin/bot/volume_waves_bot/cron && python3 cron_test.py
+01 03 * * * cd /usr/local/bin/bot/volume_waves_bot && python3 main.py
+01 06 * * * cd /usr/local/bin/bot/volume_waves_bot && python3 main.py
+01 09 * * * cd /usr/local/bin/bot/volume_waves_bot && python3 main.py
+01 12 * * * cd /usr/local/bin/bot/volume_waves_bot && python3 main.py
+01 15 * * * cd /usr/local/bin/bot/volume_waves_bot && python3 main.py
+01 18 * * * cd /usr/local/bin/bot/volume_waves_bot && python3 main.py
+01 21 * * * cd /usr/local/bin/bot/volume_waves_bot && python3 main.py
+01 00 * * * cd /usr/local/bin/bot/volume_waves_bot && python3 main.py
+
