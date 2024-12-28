@@ -196,7 +196,7 @@ if __name__ == "__main__":
 
     spot = False
     custom_logging.info("**Бот запущен**")
-    send_signal("**Бот запущен**", TLG_TOKEN, TLG_CHANNEL_ID)
+    # send_signal("**Бот запущен**", TLG_TOKEN, TLG_CHANNEL_ID)
     try:
         if spot:
             exchange_info = client.get_exchange_info()
@@ -205,9 +205,9 @@ if __name__ == "__main__":
 
         if spot:
             symbols = [symbol['symbol'] for symbol in exchange_info['symbols'] if "USDT" in symbol['symbol']]
-            print(symbols)
         else:
-            symbols = [symbol['symbol'] for symbol in exchange_info['symbols'] if symbol['contractType'] == 'PERPETUAL']
+            symbols = [symbol['symbol'] for symbol in exchange_info['symbols'] if symbol['contractType'] == 'PERPETUAL'
+                       and "USDT" in symbol['symbol']]
 
         max_workers = 4 # Максимальное количество одновременно работающих потоков (настройте по необходимости)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -224,20 +224,16 @@ if __name__ == "__main__":
 
             if len(buy_signal_symbols) > 0:
                 buy_signal_symbols.sort()
-                signal_str = '**Монеты на покупку:**\n\n'
+                signal_str = '**Монеты на продажу:**\n\n'
                 for coin in buy_signal_symbols:
                     signal_str += f'{coin}\n'
-                print("\nмонеты на покупку:")
-                print(signal_str)
                 send_signal(signal_str, TLG_TOKEN, TLG_CHANNEL_ID)
 
             if len(sell_signal_symbols) > 0:
                 sell_signal_symbols.sort()
-                signal_str = '**Монеты на продажу:**\n\n'
+                signal_str = '**Монеты на покупку:**\n\n'
                 for coin in sell_signal_symbols:
                     signal_str += f'{coin}\n'
-                print("\nмонеты на продажу:")
-                print(signal_str)
                 send_signal(signal_str, TLG_TOKEN, TLG_CHANNEL_ID)
 
     except Exception as e:
