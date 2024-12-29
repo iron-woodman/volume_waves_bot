@@ -5,13 +5,14 @@ from binance import Client
 from binance.exceptions import BinanceAPIException
 from src.config_handler import BINANCE_API_KEY, BINANCE_Secret_KEY
 from queue import Queue
+from typing import Tuple, Optional, Dict
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def get_volume(client: Client, symbol: str) -> tuple[str, float]:
+def get_volume(client: Client, symbol: str) -> Tuple[str, Optional[float]]:
     """
     Получает объем торгов для конкретной пары.
 
@@ -39,7 +40,7 @@ def get_volume(client: Client, symbol: str) -> tuple[str, float]:
         return symbol, None
 
 
-def worker(client: Client, symbol_queue: Queue, all_data: dict):
+def worker(client: Client, symbol_queue: Queue, all_data: Dict[str, float]):
     """
       Поток обработчик для получения объема символа.
     """
@@ -59,7 +60,7 @@ def get_usdt_futures_volume_json():
     Получает суточный объем торгуемых USDT фьючерсов на Binance
     и сохраняет их в файл в формате JSON (словарь coin:volume).
     """
-    all_data = {}
+    all_data: Dict[str, float] = {}
     symbol_queue = Queue()
     try:
         client = Client(BINANCE_API_KEY, BINANCE_Secret_KEY)
