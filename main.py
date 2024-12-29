@@ -4,11 +4,47 @@ from datetime import datetime
 import threading
 from src.telegram_api import send_signal
 from src.config_handler import TLG_TOKEN, TLG_CHANNEL_ID
-from src.config_handler import BINANCE_API_KEY, BINANCE_Secret_KEY
+from src.config_handler import BINANCE_API_KEY, BINANCE_Secret_KEY, MIN_VOLUME
 import src.logger as custom_logging
+import json
 
 
 client = Client(BINANCE_API_KEY, BINANCE_Secret_KEY)
+
+
+
+def filter_coins_by_volume(filename: str, min_volume: float = 1_000_000.0):
+    """
+    Фильтрует криптовалютные пары по суточному объему торгов из JSON файла.
+
+    Args:
+        filename: Путь к JSON файлу с данными об объемах (coin: volume).
+        min_volume: Минимальный суточный объем для включения в отфильтрованный список.
+    Returns:
+        Список кортежей вида (coin, volume) с отфильтрованными монетами или None в случае ошибки.
+    """
+
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        custom_logging.error(f"Файл {filename} не найден.")
+        return None
+    except json.JSONDecodeError:
+        custom_logging.error(f"Ошибка декодирования JSON в файле {filename}.")
+        return None
+    except Exception as e:
+        custom_logging.error(f"Произошла непредвиденная ошибка при чтении файла: {e}")
+        return None
+
+    filtered_coins = [coin for coin, volume in data.items() if volume >= min_volume or coin =='BTCUSDT']
+
+    # Сортировка по объему (от большего к меньшему)
+    filtered_coins.sort(key=lambda item: item[1], reverse=True)
+    custom_logging.info(f"Найдено {len(filtered_coins)} монет c объемом больше {min_volume}")
+
+    return filtered_coins
+
 
 def process_symbol(symbol):
     """Обработка одного символа в отдельном потоке."""
@@ -197,26 +233,29 @@ if __name__ == "__main__":
     spot = False
     custom_logging.info("**Бот запущен**")
     # send_signal("**Бот запущен**", TLG_TOKEN, TLG_CHANNEL_ID)
-    try:
-        if spot:
-            exchange_info = client.get_exchange_info()
-        else:
-            exchange_info = client.futures_exchange_info()
+    filename = "binance_usdt_futures_volume.json"  # Укажите путь к вашему файлу
+    filtered_coins = filter_coins_by_volume(filename, MIN_VOLUME)
 
-        if spot:
-            symbols = [symbol['symbol'] for symbol in exchange_info['symbols'] if "USDT" in symbol['symbol']]
-        else:
-            symbols = [symbol['symbol'] for symbol in exchange_info['symbols'] if symbol['contractType'] == 'PERPETUAL'
-                       and "USDT" in symbol['symbol']]
+    try:
+        # if spot:
+        #     exchange_info = client.get_exchange_info()
+        # else:
+        #     exchange_info = client.futures_exchange_info()
+        #
+        # if spot:
+        #     symbols = [symbol['symbol'] for symbol in exchange_info['symbols'] if "USDT" in symbol['symbol']]
+        # else:
+        #     symbols = [symbol['symbol'] for symbol in exchange_info['symbols'] if symbol['contractType'] == 'PERPETUAL'
+        #                and "USDT" in symbol['symbol']]
 
         max_workers = 4 # Максимальное количество одновременно работающих потоков (настройте по необходимости)
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            results = executor.map(process_symbol, symbols)
+            results = executor.map(process_symbol, filtered_coins)
 
             buy_signal_symbols = []
             sell_signal_symbols = []
 
-            for symbol, bars in zip(symbols, results):  # распаковываем результаты
+            for symbol, bars in zip(filtered_coins, results):  # распаковываем результаты
                 if bars is not None and check_for_buy_pattern(bars, symbol):
                     buy_signal_symbols.append(symbol)
                 if bars is not None and check_for_sell_pattern(bars, symbol):
