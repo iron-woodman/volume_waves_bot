@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def get_volume(client: Client, symbol: str) -> tuple[str, float | None]:
+def get_volume(client: Client, symbol: str) -> tuple[str, float]:
     """
     Получает объем торгов для конкретной пары.
 
